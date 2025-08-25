@@ -38,7 +38,8 @@ WEATHER_CODES = {
 
 def descrever_codigo(codigo: int) -> str:
     return WEATHER_CODES.get(codigo, f"Código {codigo}")
-def geocodificdor_cidade(nome_cidade: str, count: int = 1, lang: str = "pt"):
+
+def geocodificar_cidade(nome_cidade: str, count: int = 1, lang: str = "pt"):
     params = {
         "name": nome_cidade,
         "count": count,
@@ -47,9 +48,8 @@ def geocodificdor_cidade(nome_cidade: str, count: int = 1, lang: str = "pt"):
     }
     r = requests.get(OPEN_METEO_GEOCODING, params=params, timeout=20)
     r.raise_for_status()
-    data = r.jason()
-    results = data.get("results") or []
-    return results
+    data = r.json()
+    return data.get("results", [])
 
 def obter_previsao(latitude: float, longitude: float, dias: int = 3, tz_auto: bool = True):
     params = {
@@ -62,7 +62,7 @@ def obter_previsao(latitude: float, longitude: float, dias: int = 3, tz_auto: bo
     }
     r = requests.get(OPEN_METEO_FORECAST, params=params, timeout=20)
     r.raise_for_status()
-    data = r.json()
+    return r.json()
 
 def extrair_atual(hourly: dict, timezone_str: str):
     """
@@ -74,35 +74,29 @@ def extrair_atual(hourly: dict, timezone_str: str):
     precs = hourly["precipitation"]
     codes = hourly["weathercode"]
 
-        # Converte "agora" para a timezone do local
-    # (a API já entrega timezone, então apenas comparamos strings)
-    # Vamos pegar a última leitura (horário atual arredondado para baixo).
     now_idx = None
-    # As horas já vêm ordenadas; buscamos a última <= agora
     now_local = datetime.now(timezone.utc).astimezone(tz.gettz(timezone_str))
 
-    # Busca linear (poderia ser binária, mas não vale a pena)
     for i, t in enumerate(times):
-        t = datetime.fromisoformat(t).replace("z", "+00:00").astimezone(tz.gettz(timezone_str))
+        t = datetime.fromisoformat(t.replace("Z", "+00:00")).astimezone(tz.gettz(timezone_str))
         if t <= now_local:
-            now_idx = i 
+            now_idx = i
         else:
             break
 
     if now_idx is None:
-        now_idx = 0 # Nenhum horário no passado? Pega o primeiro.
+        now_idx = 0  # Nenhum horário no passado? Pega o primeiro.
 
-        return {
-            "time": times[now_idx],
-            "temperature": temps[now_idx],
-            "humidity": hums[now_idx],
-            "precipitation": precs[now_idx],
-            "weathercode": codes[now_idx],
-            "description": descrever_codigo(codes[now_idx]),
+    return {
+        "time": times[now_idx],
+        "temperature": temps[now_idx],
+        "humidity": hums[now_idx],
+        "precipitation": precs[now_idx],
+        "weathercode": codes[now_idx],
+        "description": descrever_codigo(codes[now_idx]),
     }
 
-# Monta um resumo diário
-def montar_resumo(daily: dict):
+def montar_resumo_diario(daily: dict):
     dias = []
     for i, dia in enumerate(daily["time"]):
         dias.append({
@@ -113,4 +107,4 @@ def montar_resumo(daily: dict):
             "tmin": daily["temperature_2m_min"][i],
             "rain": daily["precipitation_sum"][i],
         })
-        return dias
+    return dias

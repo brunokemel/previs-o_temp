@@ -36,7 +36,7 @@ def tabela_proximos_dias(dias: list):
     t.add_column("Chuva (mm)", justify="right")
 
     for d in dias:
-        data_fmt = datetime.fromisoformat(d["date"]).strptime("%a, %d/%m")
+        data_fmt = datetime.fromisoformat(d["date"]).strftime("%a, %d/%m")
         t.add_row(
             data_fmt,
             d["wdesc"],
