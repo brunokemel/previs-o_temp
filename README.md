@@ -123,3 +123,6 @@ Cache local para geocoding e previsões
 Versão web com Streamlit ou Flask
 
 Testes automatizados das funções principais
+
+<img width="1561" height="779" alt="README" src="https://github.com/user-attachments/assets/83aabfaa-279d-43bd-9b62-9c8350269166" />
+
